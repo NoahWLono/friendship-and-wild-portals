@@ -1,0 +1,100 @@
+import { chromium } from '@playwright/test';
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+
+const base = process.env.PORTALS_BASE_URL || 'http://localhost:4173';
+const browser = await chromium.launch({
+  executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
+  headless: true,
+  args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
+await mkdir('artifacts', {recursive:true});
+const results=[];
+try {
+  const context=await browser.newContext({ viewport:{width:960,height:720}, reducedMotion:'reduce' });
+  const page=await context.newPage();
+  const errors=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.addInitScript(()=>localStorage.setItem('fw-settings',JSON.stringify({quality:'low',pace:3})));
+  await page.goto(`${base}/?debug`,{waitUntil:'networkidle'});
+  await page.waitForFunction(()=>window.portalDebug?.journey?.getDebugState().liveWorlds===2);
+  assert.equal(await page.evaluate(()=>window.portalDebug.journey.getDebugState().gentle),true,'system reduced-motion preference');
+  assert.equal(await page.locator('#error').isVisible(),false);
+  results.push('WebGL starts with two worlds; system reduced motion respected');
+  await page.getByRole('button',{name:'Begin the crossing'}).click();
+  await page.waitForFunction(()=>window.portalDebug.journey.getDebugState().progress>0);
+  await page.getByRole('button',{name:'Pause flight',exact:true}).click();
+  const paused=await page.evaluate(()=>window.portalDebug.journey.getDebugState().progress);
+  await page.waitForTimeout(200);
+  assert.equal(await page.evaluate(()=>window.portalDebug.journey.getDebugState().progress),paused);
+  await page.getByRole('button',{name:'Save favorite',exact:true}).click();
+  assert.match(await page.evaluate(()=>localStorage.getItem('fw-favorites')),/ponyville-first-light/);
+  await page.locator('#atlas-open').click();
+  await page.getByRole('button',{name:'Saved worlds'}).click();
+  assert.equal(await page.locator('.world-card').count(),1);
+  await page.getByRole('button',{name:'Saved worlds'}).click();
+  await page.getByRole('button',{name:'Tears of the Kingdom 150'}).click();
+  assert.match(await page.locator('#results-count').textContent(),/^150 /);
+  await page.getByRole('searchbox').fill('Lightroot');
+  assert.match(await page.locator('#results-count').textContent(),/^15 /);
+  await page.getByRole('searchbox').fill('nonexistent-portal-zz');
+  assert.equal(await page.locator('#empty').isVisible(),true);
+  await page.getByRole('searchbox').fill('');
+  await page.screenshot({path:'artifacts/atlas.png',timeout:60000});
+  await page.locator('[data-enter="great-sky-island-first-light"]').click();
+  await page.waitForFunction(()=>window.portalDebug.currentWorld.id==='great-sky-island-first-light');
+  await page.getByRole('button',{name:'Pause flight',exact:true}).click();
+  assert.match(page.url(),/#world=great-sky-island-first-light/);
+  results.push('Atlas realm/search/empty/favorites filters, selection and shareable URL');
+  await page.getByRole('button',{name:'Flight settings',exact:true}).click();
+  await page.getByLabel('Graphics',{exact:false}).selectOption('high');
+  assert.equal(await page.evaluate(()=>window.portalDebug.journey.getDebugState().effectiveQuality),'high');
+  await page.getByLabel('Graphics',{exact:false}).selectOption('low');
+  assert.equal(await page.evaluate(()=>window.portalDebug.journey.getDebugState().effectiveQuality),'low');
+  await page.getByRole('button',{name:'Close settings'}).click();
+  assert.equal(await page.evaluate(()=>window.portalDebug.journey.getDebugState().paused),true);
+  results.push('Quality changes rebuild scenes and dialog close preserves paused state');
+  const before=await page.evaluate(()=>window.portalDebug.currentWorld.id);
+  await page.getByRole('button',{name:'Next portal',exact:false}).click();
+  await page.waitForFunction(id=>window.portalDebug.currentWorld.id!==id,before,{timeout:60000});
+  await page.evaluate(()=>window.portalDebug.journey.setPaused(true));
+  await page.waitForFunction(()=>window.portalDebug.journey.getDebugState().liveWorlds===2);
+  const crossing=await page.evaluate(()=>window.portalDebug.journey.getDebugState());
+  assert.equal(crossing.routeIndex,1);assert.equal(crossing.failed,false);assert.equal(crossing.liveWorlds,2);
+  await page.screenshot({path:'artifacts/portal-crossing.png',timeout:60000});
+  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Save picture',exact:true}).click();
+  const picture=await download;assert.match(picture.suggestedFilename(),/\.png$/);
+  results.push('Live portal crossing enters next world with two scenes; picture downloads as PNG');
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole('link',{name:'Friendship and the Wild home'}).click();
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.screenshot({path:'artifacts/mobile.png',timeout:60000});
+  await page.locator('#atlas-open').click();
+  await page.screenshot({path:'artifacts/mobile-atlas.png',timeout:60000});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await page.getByRole('button',{name:'Close atlas'}).click();
+  await page.reload({waitUntil:'networkidle'});
+  await page.waitForFunction(()=>window.portalDebug?.journey?.getDebugState().liveWorlds===2);
+  assert.equal(await page.locator('#favorite').getAttribute('aria-pressed'),'true');
+  results.push('390px mobile layout, modal interaction and favorites persist after reload');
+  assert.deepEqual(errors,[],'no JavaScript errors in browser');
+  await context.close();
+
+  const unavailable=await browser.newContext({viewport:{width:800,height:600}});
+  await unavailable.addInitScript(()=>{
+    const original=HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext=function(type,...args){return String(type).includes('webgl')?null:original.call(this,type,...args)};
+    Object.defineProperty(window,'localStorage',{get(){throw new Error('Blocked storage')}});
+  });
+  const fallback=await unavailable.newPage();
+  await fallback.goto(`${base}/`,{waitUntil:'networkidle'});
+  await fallback.locator('#error').waitFor({state:'visible'});
+  await fallback.getByRole('button',{name:'Browse all 450 worlds'}).click();
+  assert.equal(await fallback.locator('.world-card').count(),36);
+  await fallback.getByRole('searchbox').fill('Ponyville');
+  assert.match(await fallback.locator('#results-count').textContent(),/^15 /);
+  results.push('No-WebGL and blocked-storage fallback keeps the atlas usable');
+  await unavailable.close();
+  await writeFile('artifacts/browser-check.json',JSON.stringify({base,results,crossing,errors},null,2));
+  console.log(JSON.stringify({passed:results.length,results,crossing},null,2));
+} finally { await browser.close(); }

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+artifacts/
+.DS_Store
+.env*
+.openai/local*
+.openai/*.tar*
+test-results/
+playwright-report/

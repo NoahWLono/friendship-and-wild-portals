@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#163c35">
+  <meta name="description" content="An endless flight through 450 procedural worlds inspired by My Little Pony, Breath of the Wild, and Tears of the Kingdom. Step through. No account needed.">
+  <title>Friendship & the Wild · 450 Portals</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./src/style.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+  <script type="module" src="./src/main.js"></script>
+</head>
+<body>
+  <canvas id="world" aria-label="An automatic flight through a procedural fantasy landscape"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <header class="masthead">
+    <a class="wordmark" href="#" id="home-link" aria-label="Friendship and the Wild home"><span class="brand-mark" aria-hidden="true">✧</span><span>FRIENDSHIP<br><span class="wordmark-small">& THE WILD</span></span></a>
+    <nav aria-label="Main navigation"><button class="nav-link" id="atlas-open">The atlas <span>↗</span></button><button class="icon-button" id="settings-open" aria-label="Flight settings" title="Flight settings (O)">☷</button></nav>
+  </header>
+  <main>
+    <section class="landing" id="landing" aria-labelledby="hero-title">
+      <p class="eyebrow"><span class="tiny-star">✦</span> BETWEEN EQUESTRIA & HYRULE</p>
+      <h1 id="hero-title">A little friendship.<br>A little courage.<br><em>Endless worlds.</em></h1>
+      <p class="intro">From sunlit pony towns to the islands above Hyrule.<br> Follow the portals. Let the world come to you.</p>
+      <div class="hero-actions"><button class="primary" id="begin">Begin the crossing <span>↗</span></button><button class="text-button" id="browse">Explore the atlas <span>→</span></button></div>
+      <p class="fineprint">450 worlds · Automatic flight · No account needed</p>
+    </section>
+    <div class="landing-footer" id="landing-footer"><span class="edition">A FAN-MADE PORTAL EXPERIENCE<br><span>Inspired by the worlds we love.</span></span><div class="realm-legend"><span><i class="pink-dot"></i>Equestria</span><span><i class="gold-dot"></i>Breath of the Wild</span><span><i class="mint-dot"></i>Tears of the Kingdom</span></div><span class="vertical-note">STAY CURIOUS. KEEP CROSSING.</span></div>
+    <section id="flight-info" class="flight-info" hidden aria-label="Current world"><p id="world-realm" class="eyebrow"></p><h2 id="world-title"></h2><p id="world-description"></p><div class="world-meta"><span id="world-number"></span><span id="world-atmosphere"></span><button id="share" class="text-button">Copy world link ↗</button></div></section>
+    <div class="flight-toolbar" id="flight-toolbar" hidden role="group" aria-label="Flight controls">
+      <button id="pause" title="Pause (Space)" aria-label="Pause flight">Ⅱ</button><span class="toolbar-divider"></span>
+      <button id="favorite" title="Save favorite (H)" aria-label="Save favorite" aria-pressed="false">♡</button>
+      <button id="sound" title="Sound (S)" aria-label="Enable ambient sound" aria-pressed="false">♫</button>
+      <button id="picture" title="Save picture (P)" aria-label="Save picture">▣</button>
+      <button id="fullscreen" title="Fullscreen (F)" aria-label="Enter fullscreen">⛶</button><span class="toolbar-divider"></span>
+      <button id="next" class="next-button" title="Next portal (Right arrow)">Next portal <span>→</span></button>
+    </div>
+    <div class="flight-progress" id="flight-progress" hidden><div id="progress-bar"></div></div>
+    <div id="loading" class="loading">Opening the first portal<span class="loading-dots">…</span></div>
+    <section id="error" class="error-panel" hidden aria-live="assertive"><h2>This portal needs a graphics window.</h2><p id="error-message"></p><button id="retry" class="primary">Try again</button><button id="error-atlas" class="text-button">Browse all 450 worlds →</button></section>
+    <aside id="music-player" class="music-player" hidden aria-label="YouTube soundtrack"><div class="music-heading"><span id="music-title"></span><button id="music-close" aria-label="Stop YouTube music">×</button></div><div id="youtube-mount"></div><a id="music-source" target="_blank" rel="noopener">Watch on YouTube ↗</a><p id="music-status">Press play in the video if playback does not begin.</p></aside>
+  </main>
+  <dialog id="atlas" class="atlas" aria-labelledby="atlas-title"><div class="atlas-header"><div><p class="eyebrow">THE PORTAL ATLAS</p><h2 id="atlas-title">Where shall we wander?</h2></div><button class="close-dialog" aria-label="Close atlas">×</button></div>
+    <div class="atlas-tools"><label class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Search a world, place, or feeling…" aria-label="Search worlds"></label><button id="favorites-filter" class="filter-favorites" aria-pressed="false">♡ Saved worlds</button></div>
+    <div class="atlas-filters" role="group" aria-label="Filter by realm"><button data-realm="all" class="active" aria-pressed="true">All worlds <small>450</small></button><button data-realm="equestria" aria-pressed="false">Equestria <small>150</small></button><button data-realm="wild" aria-pressed="false">Breath of the Wild <small>150</small></button><button data-realm="kingdom" aria-pressed="false">Tears of the Kingdom <small>150</small></button></div>
+    <div class="results-heading"><p id="results-count" role="status"></p><span>30 regions · 15 variations each</span></div><div class="world-grid" id="world-grid"></div><p id="empty" class="empty" hidden>No portals here yet. Try another search or save a world with the heart.</p><button id="load-more" class="load-more">Reveal more worlds ↓</button><footer class="atlas-footer">An independent fan project. <a href="https://github.com/emollick/ai-portals" target="_blank" rel="noopener">Inspired by Portals</a> · <a href="https://github.com/NoahWLono/friendship-and-wild-portals" target="_blank" rel="noopener">Source & credits ↗</a></footer>
+  </dialog>
+  <dialog id="settings" class="settings" aria-labelledby="settings-title"><div class="settings-heading"><p class="eyebrow">MAKE YOURSELF AT HOME</p><button class="close-dialog" aria-label="Close settings">×</button></div><h2 id="settings-title">Your kind of journey.</h2>
+    <label class="setting-row" for="pace"><span>Flight pace<small>Take your time, or chase the horizon.</small></span><output id="pace-value">1×</output></label><input id="pace" type="range" min="0.5" max="3" step="0.25" value="1">
+    <label class="setting-row" for="quality"><span>Graphics<small>Lower detail can help on smaller devices.</small></span><select id="quality"><option value="auto">Auto</option><option value="low">Low</option><option value="high">High</option></select></label>
+    <label class="setting-row" for="gentle"><span>Gentle motion<small>A steady view with less camera movement.</small></span><input id="gentle" type="checkbox"></label>
+    <label class="setting-row" for="music-mode"><span>Soundtrack<small>Music follows the realm you are visiting.</small></span><select id="music-mode"><option value="off">Off</option><option value="ambient">Ambient</option><option value="youtube">YouTube themes</option></select></label>
+    <p class="music-note">YouTube themes: BOTW main theme, TOTK main theme, and WarpOut’s <em>Lullaby for a Princess</em> animation. Selecting this loads YouTube’s player. It needs a connection and may show ads.</p>
+    <details><summary>Keyboard shortcuts</summary><p class="shortcuts"><kbd>Space</kbd> Pause <kbd>→</kbd> Next portal <kbd>I</kbd> Atlas <kbd>H</kbd> Favorite <kbd>S</kbd> Ambient sound <kbd>G</kbd> Gentle <kbd>P</kbd> Picture <kbd>F</kbd> Fullscreen <kbd>O</kbd> Settings <kbd>Esc</kbd> Close</p></details>
+    <p class="settings-footer">Your saved worlds and settings stay in this browser. MLP © Hasbro. The Legend of Zelda © Nintendo. Unofficial, noncommercial fan work.</p>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <noscript><div class="error-panel"><h2>JavaScript opens the portals.</h2><p>Enable JavaScript to explore the 450 generated worlds. No account is required.</p></div></noscript>
+</body>
+</html>

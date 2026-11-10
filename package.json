@@ -1,0 +1,20 @@
+{
+  "name": "friendship-and-wild-portals",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "450 procedural worlds inspired by Equestria and the Hyrule of Breath of the Wild and Tears of the Kingdom.",
+  "license": "CC-BY-NC-SA-4.0",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "preview": "node tools/serve.mjs dist 4173",
+    "build": "node tools/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tools/browser-check.mjs",
+    "test:regions": "node tools/render-regions.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "three": "0.170.0"
+  }
+}
